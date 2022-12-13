@@ -23,16 +23,16 @@ impl Game {
         match line.chars().nth(0).unwrap() {
             'A' => match line.chars().nth(2).unwrap() {
                 'X' => {
+                    self.my_score += 3 + 0;
+                    self.other_score += 1 + 6;
+                }
+                'Y' => {
                     self.my_score += 1 + 3;
                     self.other_score += 1 + 3;
                 }
-                'Y' => {
+                'Z' => {
                     self.my_score += 2 + 6;
                     self.other_score += 1 + 0;
-                }
-                'Z' => {
-                    self.my_score += 3 + 0;
-                    self.other_score += 1 + 6;
                 }
                 _ => panic!("Invalid character"),
             },
@@ -53,16 +53,16 @@ impl Game {
             },
             'C' => match line.chars().nth(2).unwrap() {
                 'X' => {
-                    self.my_score += 1 + 6;
-                    self.other_score += 3 + 0;
-                }
-                'Y' => {
                     self.my_score += 2 + 0;
                     self.other_score += 3 + 6;
                 }
-                'Z' => {
+                'Y' => {
                     self.my_score += 3 + 3;
                     self.other_score += 3 + 3;
+                }
+                'Z' => {
+                    self.my_score += 1 + 6;
+                    self.other_score += 3 + 0;
                 }
                 _ => panic!("Invalid character"),
             },
