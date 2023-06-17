@@ -114,10 +114,13 @@ fn main() {
         let from_cmd = *from_cmd as usize;
         let to_cmd = *to_cmd as usize;
         let move_cmd = *move_cmd as usize;
-        (0..move_cmd).for_each(|_| {
-            let container_to_move = ship[from_cmd - 1].pop().unwrap();
-            ship[to_cmd - 1].push(container_to_move);
-        });
+        let cur_col = &mut ship[from_cmd - 1];
+        let new_col = &cur_col[0..cur_col.len() - move_cmd].to_vec();
+        println!("new_col: {:?}", new_col);
+        let move_col = &cur_col[cur_col.len() - move_cmd..cur_col.len()].to_vec();
+        println!("move_col: {:?}", move_col);
+        ship[from_cmd - 1] = new_col.clone();
+        ship[to_cmd - 1].extend(move_col.clone());
     }
 
     println!("ship: {:?}", ship);
