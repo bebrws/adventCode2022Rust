@@ -87,10 +87,6 @@ impl NodeType {
     }
 
     fn get_total_size_of_all_less_than_inner(&self, dirs: &mut HashMap<String, u32>) {
-        // let mut cur_size = 0;
-        // for (_, file_size) in self.files.iter() {
-        //     cur_size += file_size;
-        // }
         if self.get_size() <= 100000 {
             println!(
                 "Adding dir {} with size {}",
