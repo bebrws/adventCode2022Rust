@@ -60,6 +60,17 @@ impl NodeType {
             Rc::clone(self.dirs.get(&name).unwrap())
         }
     }
+
+    fn get_size(&self) -> u32 {
+        let mut size = 0;
+        for (_, file_size) in self.files.iter() {
+            size += file_size;
+        }
+        for (_, dir) in self.dirs.iter() {
+            size += dir.as_ref().borrow().get_size();
+        }
+        size
+    }
 }
 
 impl fmt::Debug for NodeType {
@@ -162,4 +173,5 @@ fn main() {
     }
 
     println!("{:?}", cur_dir);
+    println!("root file size: {}", root_dir.as_ref().borrow().get_size());
 }
