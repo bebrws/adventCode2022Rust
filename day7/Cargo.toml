@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies.advent_tools]
 path = "../advent_tools"
 
+[dependencies]
+nom = "7.1.3"
