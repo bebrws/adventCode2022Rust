@@ -71,6 +71,40 @@ impl NodeType {
         }
         size
     }
+
+    fn get_path_name(&self) -> String {
+        let mut path_name = self.name.clone();
+        if let Some(parent) = &self.parent {
+            path_name = parent.as_ref().borrow().get_path_name() + "/" + &path_name;
+        }
+        path_name
+    }
+
+    fn get_total_size_of_all_less_than(&self) -> u32 {
+        let mut dirs: HashMap<String, u32> = HashMap::new();
+        self.get_total_size_of_all_less_than_inner(&mut dirs);
+        dirs.iter().map(|(_, size)| size).sum()
+    }
+
+    fn get_total_size_of_all_less_than_inner(&self, dirs: &mut HashMap<String, u32>) {
+        // let mut cur_size = 0;
+        // for (_, file_size) in self.files.iter() {
+        //     cur_size += file_size;
+        // }
+        if self.get_size() <= 100000 {
+            println!(
+                "Adding dir {} with size {}",
+                self.get_path_name(),
+                self.get_size()
+            );
+            dirs.insert(self.get_path_name(), self.get_size());
+        }
+        for (_, dir) in self.dirs.iter() {
+            dir.as_ref()
+                .borrow()
+                .get_total_size_of_all_less_than_inner(dirs);
+        }
+    }
 }
 
 impl fmt::Debug for NodeType {
@@ -105,6 +139,7 @@ fn parse_instruction<'a>(
             "cd dir_name: {}",
             dir_str // cur_dir.as_ref().borrow().name
         );
+        println!("path name: {}", cur_dir.as_ref().borrow().get_path_name());
         if dir_str == "/" {
             // return Rc::clone(&root_dir);
             return root_dir;
@@ -174,4 +209,8 @@ fn main() {
 
     println!("{:?}", cur_dir);
     println!("root file size: {}", root_dir.as_ref().borrow().get_size());
+    println!(
+        "get_total_size_of_all_less_than {}",
+        root_dir.as_ref().borrow().get_total_size_of_all_less_than()
+    );
 }
