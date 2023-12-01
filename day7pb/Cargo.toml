@@ -1,5 +1,5 @@
 [package]
-name = "day7"
+name = "day7pb"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies.advent_tools]
 path = "../advent_tools"
+
+[dependencies]
+nom = "7.1.3"

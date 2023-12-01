@@ -7,7 +7,7 @@ name = "advent_tools"
 version = "0.1.0"
 
 [[package]]
-name = "day6"
+name = "day7"
 version = "0.1.0"
 dependencies = [
  "advent_tools",
