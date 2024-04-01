@@ -42,18 +42,65 @@ impl fmt::Debug for Op {
 }
 
 struct VM {
-    acc: i32,
+    // x_qeueue: Vec<i32>,
+    x_tmp: i32,
+    x: i32,
+    addx_cycles_left: usize,
     cycle: usize,
+    pc: usize,
     program: Vec<Op>,
 }
 
 impl VM {
     fn new(program: Vec<Op>) -> VM {
         VM {
-            acc: 0,
+            // x_qeueue: Vec::new(),
+            x_tmp: 0,
+            x: 1,
+            addx_cycles_left: 0,
             cycle: 0,
+            pc: 0,
             program: program,
         }
+    }
+
+    fn step(&mut self) -> Option<usize> {
+        if self.pc >= self.program.len() && self.addx_cycles_left == 0 {
+            return None;
+        }
+        if self.addx_cycles_left == 0 {
+            self.x += self.x_tmp;
+            self.x_tmp = 0;
+        }
+        if self.addx_cycles_left > 0 {
+            self.addx_cycles_left -= 1;
+        } else {
+            let op = &self.program[self.pc];
+            println!("op: {}", op);
+            match op {
+                Op::Noop => {}
+                Op::AddX(x) => {
+                    // self.x_qeueue.push(*x);
+                    self.x_tmp = *x;
+                    self.addx_cycles_left = 1;
+                }
+            }
+            self.pc += 1;
+        }
+        self.cycle += 1;
+        println!(
+            "cycle: {} pc: {} addx_cycles: {} x: {}",
+            self.cycle, self.pc, self.addx_cycles_left, self.x
+        );
+        Some(self.cycle)
+    }
+}
+
+impl Iterator for VM {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.step()
     }
 }
 
@@ -107,5 +154,28 @@ fn main() {
         }
     }
 
-    println!("program: {:?}", program);
+    let mut vm = VM::new(program);
+
+    let mut sssum = 0;
+    loop {
+        if let Some(cycle) = vm.step() {
+            if cycle >= 20 {
+                let x = cycle - 20;
+                if x == 0 || x % 40 == 0 {
+                    println!("**at 20 or 40 - cycle: {} x: {}", cycle, vm.x);
+                    let signal_strength = cycle * vm.x as usize;
+                    println!("signal strength: {}", signal_strength);
+                    sssum += signal_strength;
+                }
+            }
+            // println!("cycle: {:?}", cycle);
+            // println!("  x: {:?}", vm.x);
+        } else {
+            break;
+        }
+    }
+
+    println!("signal strength sum: {}", sssum);
+
+    // println!("program: {:?}", program);
 }
