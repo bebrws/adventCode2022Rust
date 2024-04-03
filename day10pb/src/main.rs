@@ -64,19 +64,21 @@ impl VM {
         }
     }
 
-    fn step(&mut self) -> Option<CRT> {
+    fn step(&mut self) -> Result<&CRT, &str> {
         if self.pc >= self.program.len() && self.addx_cycles_left == 0 {
-            return None;
+            return Err("Program Finished");
         }
         if self.addx_cycles_left == 0 {
             self.x += self.x_tmp;
             self.x_tmp = 0;
             if self.x >= 0 {
+                println!("Updating sprite x to {}", self.x);
                 self.crt.set_sprite_x(self.x as usize);
             } else {
-                panic!("\n\n\n\n X LESS THAN 0 \n\n\n\n");
+                // panic!("\n\n\n\n X LESS THAN 0 \n\n\n\n");
             }
         }
+        self.crt.update();
         if self.addx_cycles_left > 0 {
             self.addx_cycles_left -= 1;
         } else {
@@ -97,17 +99,17 @@ impl VM {
             "cycle: {} pc: {} addx_cycles: {} x: {}",
             self.cycle, self.pc, self.addx_cycles_left, self.x
         );
-        Some(self.crt)
+        Ok(&self.crt)
     }
 }
 
-impl Iterator for VM {
-    type Item = CRT;
+// impl Iterator for VM {
+//     type Item = CRT;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.step()
-    }
-}
+//     fn next(&mut self) -> Result<&Self::Item, &str> {
+//         self.step()
+//     }
+// }
 
 struct Sprite {
     x: usize,
@@ -115,7 +117,7 @@ struct Sprite {
 
 impl Sprite {
     fn is_pixel_on(&self, crt_x: usize) -> bool {
-        if crt_x - 1 == self.x || crt_x == self.x || crt_x + 1 == self.x {
+        if (crt_x > 0 && crt_x - 1 == self.x) || crt_x == self.x || crt_x + 1 == self.x {
             return true;
         }
         false
@@ -156,14 +158,15 @@ impl CRT {
         }
     }
 
-    fn draw(&mut self) {
+    fn update(&mut self) {
         let line = self.pos / 40;
         let line_offset = self.pos % 40;
-        if self.sprite.is_pixel_on(self.pos) {
+        if self.sprite.is_pixel_on(self.pos % 40) {
             self.lines[line][line_offset] = Pixel::On;
-        } else {
-            self.lines[line][line_offset] = Pixel::Off;
-        }
+        } /*else {
+              self.lines[line][line_offset] = Pixel::Off;
+          }*/
+        self.pos += 1;
     }
 
     fn set_sprite_x(&mut self, sprite_x: usize) {
@@ -238,11 +241,10 @@ fn main() {
 
     let mut sssum = 0;
     loop {
-        if let Some(cycle) = vm.step() {
+        if let Ok(crt) = vm.step() {
+            println!("{}", crt);
         } else {
             break;
         }
     }
-
-    println!("{}", crt);
 }
