@@ -1,0 +1,173 @@
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    character::complete::{alpha1, char, digit1, space0},
+    combinator::map,
+    combinator::map_res,
+    error::ParseError,
+    multi::separated_list1,
+    sequence::preceded,
+    sequence::separated_pair,
+    sequence::{self, delimited, pair},
+    IResult,
+};
+
+use nom::bytes::streaming::take_while;
+
+use std::cmp::Ordering;
+use std::num;
+use std::{cmp, io::Read};
+use std::{collections::BinaryHeap, collections::HashMap, fmt, fmt::Formatter, io::BufRead};
+
+enum Op {
+    Add(usize),
+    Mul(usize),
+    Sqr,
+}
+
+impl fmt::Display for Op {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Op::Add(n) => write!(f, "Add({})", n),
+            Op::Mul(n) => write!(f, "Mul({})", n),
+            Op::Sqr => write!(f, "Sqr"),
+        }
+    }
+}
+
+struct Monkey {
+    number: usize,
+    items: Vec<usize>,
+    op: Op,
+    test: usize,
+}
+
+impl fmt::Debug for Monkey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Monkey {{ number: {}, items: {:?}, op: {}, test: {} }}",
+            self.number, self.items, self.op, self.test
+        )
+    }
+}
+
+fn is_not_space(c: char) -> bool {
+    c != ' '
+}
+
+fn parse_direction(s: &str) -> IResult<&str, &str> {
+    return take_while(is_not_space)(s);
+}
+
+fn parse_noop(s: &str) -> IResult<&str, &str> {
+    tag("noop")(s)
+}
+
+fn parse_addx(s: &str) -> IResult<&str, &str> {
+    tag("addx")(s)
+}
+
+fn parse_addx_number(s: &str) -> IResult<&str, (&str, &str)> {
+    // separated_pair(
+    //     alt((tag(" -"), tag(" "))),
+    //     digit1,
+    //     space0,
+    // )(s)
+    pair(alt((tag(" -"), tag(" "))), digit1)(s)
+}
+
+fn parse_usize(s: &str) -> IResult<&str, usize> {
+    map_res(digit1, |digit_str: &str| digit_str.parse::<usize>())(s)
+}
+
+// fn parse_monkey(s: &str) -> {
+//     let (rest, (_, num)) = pair(tag("Monkey "), parse_usize)(s)?;
+// }
+
+// Parsers for sections
+fn parse_monkey_header(s: &str) -> IResult<&str, usize> {
+    // Example: "Monkey 0:"
+    let (s, num) = delimited(tag("Monkey "), parse_usize, tag(":\n"))(s)?;
+    Ok((s, num))
+}
+
+fn parse_items(s: &str) -> IResult<&str, Vec<usize>> {
+    // Example: "Starting items: 79, 98"
+    let (s, items) = delimited(
+        tag("  Starting items: "),
+        separated_list1(tag(", "), parse_usize),
+        tag("\n"),
+    )(s)?;
+    Ok((s, items))
+}
+
+fn parse_sqr(s: &str) -> IResult<&str, &str> {
+    // Example: "Starting items: 79, 98"
+    tag("* old")(s)
+}
+
+fn parse_op(s: &str) -> IResult<&str, Op> {
+    // Example: "Starting items: 79, 98"
+    if let Ok((s, (op_str, num))) = pair(tag("* "), parse_usize)(s) {
+        return Ok((s, Op::Mul(num)));
+    } else if let Ok((s, (op_str, num))) = pair(tag("+ "), parse_usize)(s) {
+        return Ok((s, Op::Add(num)));
+    } else if let Ok((s, op_str)) = parse_sqr(s) {
+        return Ok((s, Op::Sqr));
+    } else {
+        return Err(nom::Err::Error(nom::error::Error::new(
+            s,
+            nom::error::ErrorKind::Tag,
+        )));
+    }
+}
+
+fn parse_op_line(s: &str) -> IResult<&str, Op> {
+    // Example: "Starting items: 79, 98"
+    let (s, op) = delimited(tag("  Operation: new = old "), parse_op, tag("\n"))(s)?;
+    Ok((s, op))
+}
+
+fn parse_monkey(s: &str) -> IResult<&str, Monkey> {
+    let (s, number) = parse_monkey_header(s)?;
+    let (s, items) = parse_items(s)?;
+    let (s, op) = parse_op_line(s)?;
+    // ... (parse the operation, test, true_target, false_target)
+
+    Ok((
+        s,
+        Monkey {
+            number,
+            items,
+            op,
+            test: 0,
+        },
+    ))
+}
+
+fn parse_monkeys(s: &str) -> IResult<&str, Vec<Monkey>> {
+    separated_list1(tag("\n\n"), parse_monkey)(s)
+}
+
+fn main() {
+    let mut bf = advent_tools::get_buffered_file("input");
+
+    let mut lines: Vec<String> = Vec::new();
+    let mut monkeys: Vec<Monkey> = Vec::new();
+    let mut all_lines = String::new();
+    bf.read_to_string(&mut all_lines);
+    let result = parse_monkeys(all_lines.as_str());
+
+    match result {
+        Ok((_, monkeys)) => println!("Parsed Monkeys: {:?}", monkeys),
+        Err(err) => println!("Error: {}", err),
+    }
+    // let line_count = lines.count();
+    // for (cur_line_i, line_option) in lines.enumerate() {
+    //     let line = line_option.expect("Couldnt read line");
+    //     // if let Some(op) = parse_monkey(&line) {
+    //     //     program.push(op);
+    //     // }
+    // }
+}
